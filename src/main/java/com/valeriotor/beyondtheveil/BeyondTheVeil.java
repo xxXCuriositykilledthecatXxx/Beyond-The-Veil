@@ -3,10 +3,15 @@ package com.valeriotor.beyondtheveil;
 import org.apache.logging.log4j.Logger;
 
 import com.google.gson.Gson;
+import com.valeriotor.beyondtheveil.blackmirror.MirrorDialogueRegistry;
 import com.valeriotor.beyondtheveil.capabilities.IPlayerData;
 import com.valeriotor.beyondtheveil.capabilities.IResearch;
+import com.valeriotor.beyondtheveil.capabilities.MirrorCapInstance;
+import com.valeriotor.beyondtheveil.capabilities.MirrorHandler;
 import com.valeriotor.beyondtheveil.capabilities.PlayerDataHandler;
+import com.valeriotor.beyondtheveil.capabilities.PlayerDataHandler.PlayerData;
 import com.valeriotor.beyondtheveil.capabilities.ResearchHandler;
+import com.valeriotor.beyondtheveil.capabilities.ResearchHandler.ResearchData;
 import com.valeriotor.beyondtheveil.crafting.GearBenchRecipeRegistry;
 import com.valeriotor.beyondtheveil.events.MemoryUnlocks;
 import com.valeriotor.beyondtheveil.fluids.ModFluids;
@@ -26,6 +31,7 @@ import com.valeriotor.beyondtheveil.world.DimensionRegistry;
 import com.valeriotor.beyondtheveil.world.StatueChunkLoader;
 import com.valeriotor.beyondtheveil.world.WorldGenBTV;
 import com.valeriotor.beyondtheveil.world.Structures.HamletStructuresRegistry;
+import com.valeriotor.beyondtheveil.world.Structures.arche.ArcheStructuresRegistry;
 import com.valeriotor.beyondtheveil.world.biomes.BiomeRegistry;
 import com.valeriotor.beyondtheveil.worship.DGWorshipHelper;
 
@@ -65,13 +71,14 @@ public class BeyondTheVeil
     	ModFluids.registerFluids();
         logger = event.getModLog();
         proxy.preInit(event);
-        RegistryHelper.registerEntities();
         BTVPacketHandler.registerPackets();
+        MirrorDialogueRegistry.registerMirrorDialogues();
         //ClientProxy.registerEntity();
         
 
-    	CapabilityManager.INSTANCE.register(IPlayerData.class, new PlayerDataHandler.DataStorage(), new PlayerDataHandler.Factory());
-    	CapabilityManager.INSTANCE.register(IResearch.class, new ResearchHandler.ResearchStorage(), new ResearchHandler.ResearchCapFactory());
+    	CapabilityManager.INSTANCE.register(IPlayerData.class, new PlayerDataHandler.DataStorage(), PlayerData::new);
+    	CapabilityManager.INSTANCE.register(IResearch.class, new ResearchHandler.ResearchStorage(), ResearchData::new);
+    	CapabilityManager.INSTANCE.register(MirrorCapInstance.class, new MirrorHandler.MirrorStorage(), MirrorCapInstance::new);
 
     	MinecraftForge.EVENT_BUS.register(MemoryUnlocks.class);
     	MinecraftForge.TERRAIN_GEN_BUS.register(MemoryUnlocks.class);
@@ -93,6 +100,7 @@ public class BeyondTheVeil
     	
     	GameRegistry.registerWorldGenerator(new WorldGenBTV(), 10000);
     	HamletStructuresRegistry.registerStructures();
+    	ArcheStructuresRegistry.registerArcheStructures();
     	BuildingRegistry.registerBuildings();
     	NetworkRegistry.INSTANCE.registerGuiHandler(BeyondTheVeil.instance, new GuiContainerHandler());
 		DGWorshipHelper.loadDreamerResearch();

@@ -17,17 +17,14 @@ import com.valeriotor.beyondtheveil.worship.CrawlerWorship.WorshipType;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraftforge.event.RegistryEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.registries.IForgeRegistry;
 
-@Mod.EventBusSubscriber
 public class BlockRegistry {
 	
 	
 	public static final DampWood DampWood = new DampWood();	
 	public static final BlockFumeSpreader FumeSpreader = new BlockFumeSpreader();
-	public static final BlockDarkSand DarkSand = new BlockDarkSand(BlockNames.DARKSAND);
+	public static final BlockDarkSand DarkSand = new BlockDarkSand(BlockNames.DARK_SAND);
 	public static final DampStone DampStone = new DampStone();
 	public static final DampLog DampLog = new DampLog();
 	public static final DampWoodStairs DampWoodStairs = new DampWoodStairs(DampWood.getDefaultState());
@@ -80,12 +77,16 @@ public class BlockRegistry {
 	public static final BlockDreamFocusVillagers BlockDreamFocusVillagers = new BlockDreamFocusVillagers(BlockNames.DREAMFOCUSVILLAGERS);
 	public static final BlockCurtain BlockCurtain = new BlockCurtain(BlockNames.CURTAIN);
 	public static final BlockMegydrea BlockMegydrea = new BlockMegydrea(BlockNames.MEGYDREA);
-	
+	public static final BlockThickAlgae BlockThickAlgae = new BlockThickAlgae(BlockNames.THICK_ALGAE);
+	public static final BlockArchePortal BlockArchePortal = new BlockArchePortal(BlockNames.ARCHE_PORTAL);
+	public static final BlockDarkGlass BlockDarkGlass = new BlockDarkGlass(BlockNames.DARK_GLASS);
+	public static final BlockDeepPrismarine BlockDeepPrismarine = new BlockDeepPrismarine(BlockNames.DEEP_PRISMARINE);
+	public static final BlockArena BlockArena = new BlockArena(BlockNames.ARENA);
+	public static final BlockDeepChest BlockDeepChest = new BlockDeepChest(BlockNames.DEEP_CHEST);
+
 	// Fluid Blocks. Registered in ModFluids to make sure it happens after the Fluids themselves.
 	public static BlockFluidTears BlockFluidTears;
 	
-	
-	@SubscribeEvent
 	public static void registerBlocks(RegistryEvent.Register<Block> event) {
 		IForgeRegistry<Block> registry = event.getRegistry();
 		registry.register(DampWood);;
@@ -139,7 +140,13 @@ public class BlockRegistry {
 	   	registry.register(BlockDreamFocusVillagers);
 	   	registry.register(BlockCurtain);
 	   	registry.register(BlockMegydrea);
-	   	
+	   	registry.register(BlockThickAlgae);
+	   	registry.register(BlockArchePortal);
+	   	registry.register(BlockDarkGlass);
+		registry.register(BlockDeepPrismarine);
+		registry.register(BlockArena);
+		registry.register(BlockDeepChest);
+
 	   	ModSlab.registerSlab(SlabElderHalf, SlabElderDouble, registry);
 	   	ModSlab.registerSlab(SlabBloodHalf, SlabBloodDouble, registry);
 	   	

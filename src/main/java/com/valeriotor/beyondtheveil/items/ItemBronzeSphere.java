@@ -2,6 +2,7 @@ package com.valeriotor.beyondtheveil.items;
 
 import java.util.List;
 
+import com.sun.org.apache.xpath.internal.operations.Mod;
 import com.valeriotor.beyondtheveil.lib.References;
 import com.valeriotor.beyondtheveil.util.MathHelperBTV;
 
@@ -17,12 +18,10 @@ import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumHand;
 import net.minecraft.world.World;
 
-public class ItemBronzeSphere extends Item implements IArtifactItem{
+public class ItemBronzeSphere extends ModItem implements IArtifactItem{
 	
-	public ItemBronzeSphere() {
-		this.setRegistryName(References.MODID + ":bronze_sphere");
-		this.setUnlocalizedName("bronze_sphere");
-		this.setCreativeTab(References.BTV_TAB);
+	public ItemBronzeSphere(String name) {
+		super(name);
 	}
 	
 	@Override
@@ -52,10 +51,11 @@ public class ItemBronzeSphere extends Item implements IArtifactItem{
 	
 	@Override
 	public void addInformation(ItemStack stack, World worldIn, List<String> tooltip, ITooltipFlag flagIn) {
-		tooltip.add(I18n.format("lore." + this.getUnlocalizedName().substring(5)));
+		tooltip.add(I18n.format("lore." + this.getUnlocalizedName().substring(19)));
 		int itemXp = 0;
-		if(stack.hasTagCompound() && stack.getTagCompound().hasKey("xp")) itemXp = stack.getTagCompound().getInteger("xp");
-		tooltip.add(I18n.format("tooltip." + this.getUnlocalizedName().substring(5), itemXp));
+		if(stack.hasTagCompound() && stack.getTagCompound().hasKey("xp"))
+			itemXp = stack.getTagCompound().getInteger("xp");
+		tooltip.add(I18n.format("tooltip." + this.getUnlocalizedName().substring(19), itemXp));
 	}
 	
 	

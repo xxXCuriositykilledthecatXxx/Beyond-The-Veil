@@ -6,36 +6,31 @@ import java.util.Random;
 import javax.annotation.Nullable;
 
 import com.valeriotor.beyondtheveil.blocks.BlockRegistry;
+import com.valeriotor.beyondtheveil.world.BTVChunkCacheStore;
+import com.valeriotor.beyondtheveil.world.Structures.arche.ArcheStructuresRegistry;
+import com.valeriotor.beyondtheveil.world.Structures.arche.deepcity.DeepCity;
+import com.valeriotor.beyondtheveil.world.Structures.arche.deepcity.DeepCityList;
+import com.valeriotor.beyondtheveil.world.biomes.BiomeRegistry;
 
 import net.minecraft.block.BlockFalling;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.EnumCreatureType;
-import net.minecraft.init.Biomes;
 import net.minecraft.init.Blocks;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.BlockPos.MutableBlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
-import net.minecraft.world.WorldEntitySpawner;
 import net.minecraft.world.WorldType;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ChunkPrimer;
-import net.minecraft.world.gen.ChunkGeneratorSettings;
 import net.minecraft.world.gen.IChunkGenerator;
-import net.minecraft.world.gen.MapGenBase;
-import net.minecraft.world.gen.MapGenCaves;
-import net.minecraft.world.gen.MapGenRavine;
 import net.minecraft.world.gen.NoiseGeneratorOctaves;
 import net.minecraft.world.gen.NoiseGeneratorPerlin;
-import net.minecraft.world.gen.feature.WorldGenDungeons;
-import net.minecraft.world.gen.feature.WorldGenLakes;
-import net.minecraft.world.gen.structure.MapGenMineshaft;
-import net.minecraft.world.gen.structure.MapGenScatteredFeature;
-import net.minecraft.world.gen.structure.MapGenStronghold;
-import net.minecraft.world.gen.structure.MapGenVillage;
-import net.minecraft.world.gen.structure.StructureOceanMonument;
-import net.minecraft.world.gen.structure.WoodlandMansion;
+import net.minecraftforge.event.ForgeEventFactory;
+import net.minecraftforge.fml.common.registry.GameRegistry;
 
 public class ChunkGeneratorArche implements IChunkGenerator
 {
@@ -61,6 +56,7 @@ public class ChunkGeneratorArche implements IChunkGenerator
     double[] minLimitRegion;
     double[] maxLimitRegion;
     double[] depthRegion;
+    private final BTVChunkCacheStore chunkCaches;
 
     public ChunkGeneratorArche(World worldIn, long seed, boolean mapFeaturesEnabledIn)
     {
@@ -99,6 +95,7 @@ public class ChunkGeneratorArche implements IChunkGenerator
         this.scaleNoise = ctx.getScale();
         this.depthNoise = ctx.getDepth();
         this.forestNoise = ctx.getForest();
+        chunkCaches = BTVChunkCacheStore.get(worldIn);
     }
 
     public void setBlocksInChunk(int x, int z, ChunkPrimer primer)
@@ -149,7 +146,7 @@ public class ChunkGeneratorArche implements IChunkGenerator
                             	if(y < seaLevel()+2) {
                                 if ((lvt_45_1_ += d16) > 0.0D)
                                 {
-                                    primer.setBlockState(i * 4 + k2, i2 * 8 + j2, l * 4 + l2, BlockRegistry.DarkSand.getDefaultState());
+                                    primer.setBlockState(i * 4 + k2, i2 * 8 + j2, l * 4 + l2, DARKSAND);
                                 }
                                 else if (i2 * 8 + j2 < seaLevel())
                                 {
@@ -215,7 +212,67 @@ public class ChunkGeneratorArche implements IChunkGenerator
         }
 
         chunk.generateSkylightMap();
+        generateAndCacheDeepCity(x, z);
         return chunk;
+    }
+    
+    private void generateAndCacheDeepCity(int chunkX, int chunkZ) {
+    	int xMod128 = chunkX & 7;
+        int zMod128 = chunkZ & 7;
+        int xMod1024 = chunkX & 63;
+        int zMod1024 = chunkZ & 63;
+        if(xMod128 == 0 && zMod128 == 0 && xMod1024 != 0 && zMod1024 != 0) {  // are the chunk coords multiples of 128 but not 1024? (away from blood homes)
+        	int x = chunkX << 4;
+        	int z = chunkZ << 4;
+        	final BlockPos center = new BlockPos(x, 27, z);
+        	DeepCityList list = DeepCityList.get(world);
+        	for(EnumFacing face : EnumFacing.HORIZONTALS) {
+        		for(EnumFacing face2 : EnumFacing.HORIZONTALS) {
+        			if(face == face2.getOpposite()) continue;
+	        		BlockPos newPos = center.offset(face, 512).offset(face2, 256);
+	        		int newChunkX = newPos.getX() >> 4;
+	        		int newChunkZ = newPos.getZ() >> 4;
+	        		int newChunkXMod1024 = newChunkX & 63;
+	        		int newChunkZMod1024 = newChunkZ & 63;
+		        	if(list.isFarEnough(x, z, 720) && !list.isChunkUsed(chunkX, chunkZ)) {
+	        			boolean generated = world.isChunkGeneratedAt(newChunkX, newChunkZ);
+		        		if(isSuitablePositionForCity(newPos)) {
+		        			DeepCity city = new DeepCity(world, newPos);
+		        			city.loadCity();
+		        			boolean canAdd = true;
+		        			for(Long l : city.getChunkCoords()) {
+		        			    if(list.isChunkUsed(l)) {
+		        			        canAdd = false;
+                                }
+                            }
+		        			if(canAdd)
+		        			    DeepCityList.get(world).addCity(newChunkX, newChunkZ, city);
+		        		}
+		        	}
+        		}
+        	}
+        }
+    }
+    
+    private boolean isSuitablePositionForCity(BlockPos pos) {
+    	for(int x = -4; x <= 4; x++) {
+    		for(int z = -4; z <= 4; z++) {
+    			BlockPos newPos = pos.add(x*24, 0, z*24);
+    			boolean generated = world.isChunkGeneratedAt(newPos.getX() >> 4, newPos.getZ() >> 4);
+    			if(generated) return false;
+    			if(Math.abs(x) < 2 && Math.abs(z) < 2) {
+    				if(world.getBiomeForCoordsBody(newPos) != BiomeRegistry.arche_plains) {
+            			return false;
+            		}
+    			} else {
+    				if(world.getBiomeForCoordsBody(newPos) == BiomeRegistry.arche_algae_forest) { //TODO: Change to NOT APPLICABLE
+            			return false;
+            		}
+    			}
+        		
+        	}
+    	}
+    	return true;    	
     }
 
     private void generateHeightmap(int p_185978_1_, int p_185978_2_, int p_185978_3_)
@@ -339,87 +396,48 @@ public class ChunkGeneratorArche implements IChunkGenerator
     /**
      * Generate initial structures in this chunk, e.g. mineshafts, temples, lakes, and dungeons
      */
-    public void populate(int x, int z)
+    public void populate(int chunkX, int chunkZ)
     {
-        /*BlockFalling.fallInstantly = true;
-        int i = x * 16;
-        int j = z * 16;
+        BlockFalling.fallInstantly = true;
+        int i = chunkX * 16;
+        int j = chunkZ * 16;
         BlockPos blockpos = new BlockPos(i, 0, j);
         Biome biome = this.world.getBiome(blockpos.add(16, 0, 16));
         this.rand.setSeed(this.world.getSeed());
         long k = this.rand.nextLong() / 2L * 2L + 1L;
         long l = this.rand.nextLong() / 2L * 2L + 1L;
-        this.rand.setSeed((long)x * k + (long)z * l ^ this.world.getSeed());
+        this.rand.setSeed((long)chunkX * k + (long)chunkZ * l ^ this.world.getSeed());
         boolean flag = false;
-        ChunkPos chunkpos = new ChunkPos(x, z);
+        ChunkPos chunkpos = new ChunkPos(chunkX, chunkZ);
 
-        net.minecraftforge.event.ForgeEventFactory.onChunkPopulate(true, this, this.world, this.rand, x, z, flag);
-
-
-        if (biome != Biomes.DESERT && biome != Biomes.DESERT_HILLS && this.settings.useWaterLakes && !flag && this.rand.nextInt(this.settings.waterLakeChance) == 0)
-        if (net.minecraftforge.event.terraingen.TerrainGen.populate(this, this.world, this.rand, x, z, flag, net.minecraftforge.event.terraingen.PopulateChunkEvent.Populate.EventType.LAKE))
-        {
-            int i1 = this.rand.nextInt(16) + 8;
-            int j1 = this.rand.nextInt(256);
-            int k1 = this.rand.nextInt(16) + 8;
-            (new WorldGenLakes(Blocks.WATER)).generate(this.world, this.rand, blockpos.add(i1, j1, k1));
-        }
-
-        if (!flag && this.rand.nextInt(this.settings.lavaLakeChance / 10) == 0 && this.settings.useLavaLakes)
-        if (net.minecraftforge.event.terraingen.TerrainGen.populate(this, this.world, this.rand, x, z, flag, net.minecraftforge.event.terraingen.PopulateChunkEvent.Populate.EventType.LAVA))
-        {
-            int i2 = this.rand.nextInt(16) + 8;
-            int l2 = this.rand.nextInt(this.rand.nextInt(248) + 8);
-            int k3 = this.rand.nextInt(16) + 8;
-
-            if (l2 < this.world.getSeaLevel() || this.rand.nextInt(this.settings.lavaLakeChance / 8) == 0)
-            {
-                (new WorldGenLakes(Blocks.LAVA)).generate(this.world, this.rand, blockpos.add(i2, l2, k3));
-            }
-        }
-
-        if (this.settings.useDungeons)
-        if (net.minecraftforge.event.terraingen.TerrainGen.populate(this, this.world, this.rand, x, z, flag, net.minecraftforge.event.terraingen.PopulateChunkEvent.Populate.EventType.DUNGEON))
-        {
-            for (int j2 = 0; j2 < this.settings.dungeonChance; ++j2)
-            {
-                int i3 = this.rand.nextInt(16) + 8;
-                int l3 = this.rand.nextInt(256);
-                int l1 = this.rand.nextInt(16) + 8;
-                (new WorldGenDungeons()).generate(this.world, this.rand, blockpos.add(i3, l3, l1));
-            }
-        }
+        net.minecraftforge.event.ForgeEventFactory.onChunkPopulate(true, this, this.world, this.rand, chunkX, chunkZ, flag);
 
         biome.decorate(this.world, this.rand, new BlockPos(i, 0, j));
-        if (net.minecraftforge.event.terraingen.TerrainGen.populate(this, this.world, this.rand, x, z, flag, net.minecraftforge.event.terraingen.PopulateChunkEvent.Populate.EventType.ANIMALS))
-        WorldEntitySpawner.performWorldGenSpawning(this.world, biome, i + 8, j + 8, 16, 16, this.rand);
-        blockpos = blockpos.add(8, 0, 8);
-
-        if (net.minecraftforge.event.terraingen.TerrainGen.populate(this, this.world, this.rand, x, z, flag, net.minecraftforge.event.terraingen.PopulateChunkEvent.Populate.EventType.ICE))
-        {
-        for (int k2 = 0; k2 < 16; ++k2)
-        {
-            for (int j3 = 0; j3 < 16; ++j3)
-            {
-                BlockPos blockpos1 = this.world.getPrecipitationHeight(blockpos.add(k2, 0, j3));
-                BlockPos blockpos2 = blockpos1.down();
-
-                if (this.world.canBlockFreezeWater(blockpos2))
-                {
-                    this.world.setBlockState(blockpos2, Blocks.ICE.getDefaultState(), 2);
-                }
-
-                if (this.world.canSnowAt(blockpos1, true))
-                {
-                    this.world.setBlockState(blockpos1, Blocks.SNOW_LAYER.getDefaultState(), 2);
-                }
-            }
+        
+        generateBloodHome(chunkX, chunkZ);
+        generateDeepCityChunk(chunkX, chunkZ);
+        
+        ForgeEventFactory.onChunkPopulate(false, this, this.world, this.rand, chunkX, chunkZ, false);
+		GameRegistry.generateWorld(chunkX, chunkZ, this.world, this, this.world.getChunkProvider());
+    }
+    
+    private void generateBloodHome(int chunkX, int chunkZ) {
+        int i = chunkX * 16;
+        int j = chunkZ * 16;
+        
+        int xMod1024 = chunkX & 63;
+        int zMod1024 = chunkZ & 63;
+        MutableBlockPos pos = new MutableBlockPos();
+        if(xMod1024 == 0 && zMod1024 == 0 /*&& world.getBiome(new BlockPos(i, 112, j)) == BiomeRegistry.arche_plains*/) {
+        	ArcheStructuresRegistry.HOME.generate(world, new BlockPos(i, 112, j));
         }
-        }//Forge: End ICE
-
-        net.minecraftforge.event.ForgeEventFactory.onChunkPopulate(false, this, this.world, this.rand, x, z, flag);
-
-        BlockFalling.fallInstantly = false;*/
+    }
+    
+    private void generateDeepCityChunk(int chunkX, int chunkZ) {
+    	DeepCity city = DeepCityList.get(world).getCity(chunkX, chunkZ);
+    	if(city != null) {
+    		city.generateChunk(chunkX, chunkZ);
+    	}
     }
 
     /**

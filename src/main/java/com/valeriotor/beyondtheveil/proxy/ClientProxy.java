@@ -1,6 +1,10 @@
 package com.valeriotor.beyondtheveil.proxy;
 
 import com.valeriotor.beyondtheveil.animations.AnimationRegistry;
+import com.valeriotor.beyondtheveil.blackmirror.MirrorDialogueRegistry;
+import com.valeriotor.beyondtheveil.dreaming.Memory;
+import com.valeriotor.beyondtheveil.entities.bosses.ArenaMusic;
+import com.valeriotor.beyondtheveil.entities.bosses.EntityArenaBoss;
 import com.valeriotor.beyondtheveil.entities.models.ModelRegistry;
 import com.valeriotor.beyondtheveil.entities.render.RegisterRenders;
 import com.valeriotor.beyondtheveil.events.ClientEvents;
@@ -9,6 +13,8 @@ import com.valeriotor.beyondtheveil.fluids.ModFluids;
 import com.valeriotor.beyondtheveil.gui.DialogueRequirement;
 import com.valeriotor.beyondtheveil.gui.Guis;
 import com.valeriotor.beyondtheveil.gui.OpenGuiSelector;
+import com.valeriotor.beyondtheveil.gui.toasts.IctyaryToast;
+import com.valeriotor.beyondtheveil.gui.toasts.MemoryToast;
 import com.valeriotor.beyondtheveil.items.ItemMemoryPhial;
 import com.valeriotor.beyondtheveil.items.ItemRegistry;
 import com.valeriotor.beyondtheveil.lib.KeyHandler;
@@ -113,7 +119,7 @@ public class ClientProxy extends CommonProxy {
     
     @Override
     public void loadCustomResources() {
-    	AnimationRegistry.loadAnimations();
+    	AnimationRegistry.loadAnimations(true);
     	DialogueRequirement.registerRequirements();
     }
     
@@ -121,8 +127,19 @@ public class ClientProxy extends CommonProxy {
     public EntityPlayer getPlayer() {
     	return Minecraft.getMinecraft().player;
     }
-    
-    
-	
-	
+
+    @Override
+    public void playArenaSound(EntityArenaBoss boss) {
+        Minecraft.getMinecraft().getSoundHandler().playSound(new ArenaMusic(boss));
+    }
+
+    public void createMemoryToast(Memory memory) {
+        Minecraft.getMinecraft().getToastGui().add(MemoryToast.createMemoryToast(memory));
+    }
+
+
+    public void createIctyaryToast(String ictya) {
+        Minecraft.getMinecraft().getToastGui().add(IctyaryToast.createIctyaryToast(ictya));
+    }
+
 }

@@ -16,14 +16,14 @@ public class ModItem extends Item{
 	
 	public ModItem(String name) {
 		this.setRegistryName(References.MODID, name);
-		this.setUnlocalizedName(name);
+		this.setUnlocalizedName(References.MODID + ":" + name);
 		this.setCreativeTab(References.BTV_TAB);
 	}
 	
 	@SideOnly(Side.CLIENT)
 	@Override
 	public void addInformation(ItemStack stack, World worldIn, List<String> tooltip, ITooltipFlag flagIn) {
-		String info = I18n.format(String.format("lore.%s",  this.getUnlocalizedName().substring(5)));
+		String info = I18n.format(String.format("lore.%s",  this.getUnlocalizedName().substring(19)));
 		if(!info.substring(0,4).equals("lore")) tooltip.add(info);
 	}
 	

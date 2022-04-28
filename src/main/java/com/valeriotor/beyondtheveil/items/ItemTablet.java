@@ -2,6 +2,7 @@ package com.valeriotor.beyondtheveil.items;
 
 import java.util.List;
 
+import com.sun.org.apache.xpath.internal.operations.Mod;
 import com.valeriotor.beyondtheveil.BeyondTheVeil;
 import com.valeriotor.beyondtheveil.gui.Guis;
 import com.valeriotor.beyondtheveil.lib.References;
@@ -21,15 +22,13 @@ import net.minecraft.util.EnumHand;
 import net.minecraft.util.NonNullList;
 import net.minecraft.world.World;
 
-public class ItemTablet extends Item{
+public class ItemTablet extends ModItem{
 	
 	public ItemTablet(String name) {
-		setRegistryName(References.MODID + ":" + name);
-		setUnlocalizedName(name);
+		super(name);
 		setHasSubtypes(true);
 		setMaxDamage(0);
 		this.setMaxStackSize(1);
-		this.setCreativeTab(References.BTV_TAB);
 	}
 	
 	@Override
@@ -56,7 +55,7 @@ public class ItemTablet extends Item{
 	@Override
 	public void addInformation(ItemStack stack, World worldIn, List<String> tooltip, ITooltipFlag flagIn) {
 		if(stack.getItem() == ItemRegistry.tablet) {
-			tooltip.add(I18n.format("lore." + this.getUnlocalizedName().substring(5)));
+			tooltip.add(I18n.format("lore." + this.getUnlocalizedName().substring(19)));
 		}
 	}
 	

@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.valeriotor.beyondtheveil.capabilities.PlayerDataProvider;
 import com.valeriotor.beyondtheveil.items.IArtifactItem;
+import com.valeriotor.beyondtheveil.items.ModItem;
 import com.valeriotor.beyondtheveil.lib.PlayerDataLib;
 import com.valeriotor.beyondtheveil.lib.References;
 import com.valeriotor.beyondtheveil.network.BTVPacketHandler;
@@ -28,13 +29,11 @@ import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.World;
 
-public class ItemWolfMedallion extends Item implements IBauble, IActiveBauble, IArtifactItem{
+public class ItemWolfMedallion extends ModItem implements IBauble, IActiveBauble, IArtifactItem{
 	
-	public ItemWolfMedallion() {
+	public ItemWolfMedallion(String name) {
+		super(name);
 		this.setMaxStackSize(1);
-		this.setCreativeTab(References.BTV_TAB);
-		setRegistryName(References.MODID +":wolf_medallion");
-		setUnlocalizedName("wolf_medallion");
 	}
 	
 	
@@ -42,13 +41,7 @@ public class ItemWolfMedallion extends Item implements IBauble, IActiveBauble, I
 	public BaubleType getBaubleType(ItemStack itemstack) {
 		return BaubleType.AMULET;
 	}
-	
-	@Override
-	public void addInformation(ItemStack stack, World worldIn, List<String> tooltip, ITooltipFlag flagIn) {
-		tooltip.add(I18n.format("lore." + this.getUnlocalizedName().substring(5)));
-		super.addInformation(stack, worldIn, tooltip, flagIn);
-	}
-	
+
 	@Override
 	public void onWornTick(ItemStack itemstack, EntityLivingBase player) {
 		if(player.world.isRemote) return;

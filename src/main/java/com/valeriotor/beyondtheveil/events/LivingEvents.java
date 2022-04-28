@@ -3,15 +3,15 @@ package com.valeriotor.beyondtheveil.events;
 import java.util.List;
 
 import com.valeriotor.beyondtheveil.entities.BTVEntityRegistry;
-import com.valeriotor.beyondtheveil.entities.EntityDeepOne;
 import com.valeriotor.beyondtheveil.entities.EntityShoggoth;
-import com.valeriotor.beyondtheveil.entities.EntitySurgeon;
+import com.valeriotor.beyondtheveil.entities.IDamageCapper;
 import com.valeriotor.beyondtheveil.entities.IPlayerGuardian;
 import com.valeriotor.beyondtheveil.events.special.AzacnoParasiteEvents;
 import com.valeriotor.beyondtheveil.items.ItemRegistry;
 import com.valeriotor.beyondtheveil.potions.PotionHeartbreak;
 import com.valeriotor.beyondtheveil.potions.PotionRegistry;
 
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.monster.EntitySkeleton;
@@ -39,6 +39,7 @@ public class LivingEvents {
 				commandMinions(e);
 				AzacnoParasiteEvents.damageEntity(e);
 				ItemRegistry.coral_staff.commandUndead(e);
+				DOSkillEvents.doPoisonSkill(e);
 			}
 		}
 		e.setCanceled(cancelDamage(e));
@@ -50,23 +51,22 @@ public class LivingEvents {
 		if(ent instanceof EntityShoggoth) {
 			if( d == DamageSource.IN_WALL || 
 				d == DamageSource.CRAMMING) return true;
-			if(e.getAmount() > 10 && !DEBUG) e.setAmount(10);
-		} else if(ent instanceof EntityDeepOne && !DEBUG) {
-			if(ent.isInWater() && e.getAmount() > 8)
-				e.setAmount(8);
-			else if(e.getAmount() > 15)
-				e.setAmount(15);
-		} else if(ent instanceof EntitySurgeon) {
-			if(e.getAmount() > 12)
-				e.setAmount(12);
+		} 
+		if(!DEBUG && ent instanceof IDamageCapper) {
+			capDamage(e, ((IDamageCapper)ent).getMaxDamage());
 		}
 		
 		return false;
 	}
 	
+	private static void capDamage(LivingHurtEvent e, float amount) {
+		if(e.getAmount() > amount)
+			e.setAmount(amount);
+	}
+	
 	public static void commandMinions(LivingHurtEvent e) {
 		EntityPlayer p = (EntityPlayer) e.getSource().getTrueSource();
-		List<EntityLiving> minions = p.world.getEntities(EntityLiving.class, ent -> ent instanceof IPlayerGuardian && ((IPlayerGuardian)ent).getMasterID() == p.getPersistentID());
+		List<EntityLiving> minions = p.world.getEntities(EntityLiving.class, ent -> ent instanceof IPlayerGuardian && p.getPersistentID().equals(((IPlayerGuardian)ent).getMasterID()));
 		for(EntityLiving ent : minions) {
 			((IPlayerGuardian)ent).setTarget(e.getEntityLiving());
 		}
@@ -88,8 +88,11 @@ public class LivingEvents {
 	
 	@SubscribeEvent
 	public static void deathEvent(LivingDeathEvent event) {
-		if(event.getSource().getTrueSource() instanceof EntitySkeleton) {
-			((EntitySkeleton)event.getSource().getTrueSource()).setAttackTarget(null);
+		Entity trueSource = event.getSource().getTrueSource();
+		if(trueSource instanceof EntitySkeleton) {
+			((EntitySkeleton) trueSource).setAttackTarget(null);
+		} else if (trueSource instanceof EntityPlayer) {
+			DOSkillEvents.doRegenerationSkill(event);
 		}
 	}
 	
