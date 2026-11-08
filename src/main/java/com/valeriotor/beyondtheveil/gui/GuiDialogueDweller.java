@@ -118,7 +118,7 @@ public class GuiDialogueDweller extends GuiScreen {
 				if(this.intervalCount >= this.interval) {
 					this.intervalCount = 0;
 					this.letterCount++;
-					char c = this.dialogue.charAt(this.letterCount - 2);
+					char c = this.dialogue.charAt(this.letterCount - 3);
 					if(c == '.' || c == '?' || c == '!') this.intervalCount-=5;
 					else if(this.dialogue.charAt(this.letterCount - 2) == ',') this.intervalCount--;
 					this.setDialogueSpeed();
