@@ -114,7 +114,7 @@ public class GuiDialogueDweller extends GuiScreen {
 	public void updateScreen() {
 			this.intervalCount++;
 			
-			if(this.letterCount < this.dialogueLength()) {
+			if(this.letterCount < this.dialogueLength) {
 				if(this.intervalCount >= this.interval) {
 					this.intervalCount = 0;
 					this.letterCount++;
