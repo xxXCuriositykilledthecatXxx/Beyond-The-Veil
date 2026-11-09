@@ -114,13 +114,13 @@ public class GuiDialogueDweller extends GuiScreen {
 	public void updateScreen() {
 			this.intervalCount++;
 			
-			if(this.letterCount < this.dialogueLength) {
+			if(this.letterCount < this.dialogue.length()) {
 				if(this.intervalCount >= this.interval) {
 					this.intervalCount = 0;
 					this.letterCount++;
 					char c = this.dialogue.charAt(this.letterCount - 2);
 					if(c == '.' || c == '?' || c == '!') this.intervalCount-=5;
-					else if(this.dialogue.charAt(this.letterCount - 2) == ',') this.intervalCount--;
+					else if (c == ',') this.intervalCount--;
 					this.setDialogueSpeed();
 				}
 			}
