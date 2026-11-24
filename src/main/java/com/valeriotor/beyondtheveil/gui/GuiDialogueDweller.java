@@ -218,6 +218,10 @@ public class GuiDialogueDweller extends GuiScreen {
 		int offset = 0;
 		if(this.letterCount >= this.dialogueLength - 1) return;
 		if(this.letterCount == 1) offset = -1;
+		for (int offset = 0; offset < 3; offset++) {
+    int idx = this.letterCount + offset;
+    if (idx >= this.dialogue.length()) break;
+}
 		switch(this.dialogue.charAt(this.letterCount + offset)) {
 		case '{':
 			this.interval += 1;
